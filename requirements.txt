@@ -1,0 +1,3 @@
+###### Requirements ######
+pillow == 8.01
+pygame == 2.0.1
