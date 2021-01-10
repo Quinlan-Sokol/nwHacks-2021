@@ -6,7 +6,7 @@
 3. Run the project using `$ python3.9 main.py`
 
 # Usage:
-Simply click *Inspire Me Now* to generate an image guaranteed to make your day!
+Simply click *Inspire Me Now* to generate an image guaranteed to make your day!\n
 You can even download it so you can save it for another dreary day!
 Additionally, adjust the saturation bar to reflect upon your current mood!
 And last and most importantly, enjoy!
