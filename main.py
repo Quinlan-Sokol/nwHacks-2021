@@ -96,40 +96,71 @@ def drawCheckbox(x, y):
 
 
 def pBar(x1, y1, x2, y2, initial, progress, clickPos, holding):
-
     if holding is True:
         progress = round((mousePos.getX() - initial) / 3)
         if progress > 200:
             progress = 200
         elif progress < 0:
             progress = 0
-        if window.mouse_pressed is False:
-            return False, progress, initial
 
-
-    createRectangle(window, Point(x1, y1), Point(x2, y2), "white")
-    createRectangle(window, Point(x1, y1), Point(x1 + 10 + progress * 3, y2), "red")
-    createText(window, Point((x1+x2)/2, (y1 + y2) / 2), progress*2)
-
-    if clickPos is not None and x1 + progress * 3 <= clickPos.getX() <= x1 + progress * 3 + 10 and y1 < clickPos.getY() <= y2:
+    createRectangle(window, Point(x1, y1), Point(x2, y2), "black", color_rgb(250, 243, 122), 5)
+    createRectangle(window, Point(x1, y1), Point(x1 + progress * 3, y2), color_rgb(250, 200, 67),
+                    color_rgb(250, 243, 122), 5)
+    createText(window, Point((x1 + x2) / 2, (y1 + y2) / 2), progress, color_rgb(150,150,150), "courier", 12, "bold")
+    if window.mouse_pressed is False:
+        return False, progress, initial
+    if clickPos is not None and x1 + progress * 3 - 3 <= clickPos.getX() <= x1 + progress * 3 + 8 and y1 < clickPos.getY() <= y2:
         return True, clickPos.getX() - progress * 3, initial
     return holding, progress, initial
 
 
+def round_rectangle(x1, y1, x2, y2, radius=25, **kwargs):
+    points = [x1 + radius, y1,
+              x1 + radius, y1,
+              x2 - radius, y1,
+              x2 - radius, y1,
+              x2, y1,
+              x2, y1 + radius,
+              x2, y1 + radius,
+              x2, y2 - radius,
+              x2, y2 - radius,
+              x2, y2,
+              x2 - radius, y2,
+              x2 - radius, y2,
+              x1 + radius, y2,
+              x1 + radius, y2,
+              x1, y2,
+              x1, y2 - radius,
+              x1, y2 - radius,
+              x1, y1 + radius,
+              x1, y1 + radius,
+              x1, y1]
+
+    return window.create_polygon(points, **kwargs, smooth=True, fill=color_rgb(250, 243, 122))
+
+
 def drawItems():
-    createText(window, Point(500, 200), "Inspirational Quote Generator", "white", "courier", 30, "bold")
-    createText(window, Point(500, 700), "Saturation:", "white", "courier", 20)
-    createText(window, Point(500, 500), "Inspire Me Now :)", "white", "courier", 15)
+    title = Image(Point(500, 200), "inspire_me2.png")
+    sat = Image(Point(500, 700), "sat.png")
+    button = Image(Point(500, 500), "button1.png")
+    title.draw(window)
+
+    sat.draw(window)
+    round_rectangle(345, 465, 655, 530, radius=25)
+    button.draw(window)
+
 
 def hover():
-    if 415 <= mousePos.getX() <= 583 and 490 < mousePos.getY() <= 510:
+    if 345 <= mousePos.getX() <= 655 and 465 < mousePos.getY() <= 535:
         clear(window)
         drawBackground(window)
-        createText(window, Point(500, 500), "Inspire Me Now :)", "black", "courier", 20)
+        round_rectangle(333, 460, 667, 535, radius=25)
+        button = Image(Point(500, 500), "button2.png")
+        button.draw(window)
 
 
 # initialize the window
-window = GraphWin("Inspire Me Now!", wSize[0], wSize[1], autoflush=False)
+window = GraphWin("Inspire Me!", wSize[0], wSize[1], autoflush=False)
 window.setBackground("white")
 window.bind("<Motion>", motion)
 window.master.protocol("WM_DELETE_WINDOW", onClose)
@@ -142,7 +173,7 @@ mixer.music.play(loops=-1)
 draw1x = False
 trackMouseDown = False
 click = None
-saturation = 0
+saturation = 100
 initialX = 195
 
 r = 40
@@ -167,7 +198,7 @@ while windowOpen:
     click = window.checkMouse()
 
     # DrawBar
-    bar1 = pBar(195, 740, 805, 800, initialX, saturation, click, trackMouseDown)
+    bar1 = pBar(200, 740, 800, 800, initialX, saturation, click, trackMouseDown)
     if bar1 is not None:
         trackMouseDown = bar1[0]
         saturation = bar1[1]
@@ -175,6 +206,5 @@ while windowOpen:
 
     drawItems()
     hover()
-
 
     update(60)
