@@ -1,8 +1,12 @@
 from graphics import *
-from BackgroundCircle import *
+from BackgroundCircle import BackgroundCircle
+from ImageWindow import ImageWindow
 from random import randint, choice
 from math import sqrt
 from pygame import mixer
+from os import listdir, mkdir, path, remove
+from PIL import Image as PImage
+from PIL import ImageEnhance, ImageFont, ImageDraw
 
 # window size [width, height]
 wSize = (1000, 1000)
@@ -14,6 +18,16 @@ minB = 150
 maxB = 255
 curB = 150
 deltaB = -1
+
+draw1x = False
+trackMouseDown = False
+click = None
+saturation = 100
+initialX = 195
+
+images = []
+imageWindows = []
+quotes = []
 
 circles = []
 circleColors = []
@@ -78,7 +92,7 @@ def onClose():
 
 
 def distance(p1, p2):
-    return sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
+    return sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2)
 
 
 def drawBackground(win):
@@ -89,6 +103,12 @@ def drawBackground(win):
     if curB == maxB or curB == minB:
         deltaB *= -1
     curB += deltaB
+
+
+def loadImages():
+    for file in listdir("Images/"):
+        if ".png" in file:
+            images.append(file)
 
 
 def drawCheckbox(x, y):
@@ -139,10 +159,15 @@ def round_rectangle(x1, y1, x2, y2, radius=25, **kwargs):
     return window.create_polygon(points, **kwargs, smooth=True, fill=color_rgb(250, 243, 122))
 
 
+# determines if Point p is within a rectangle
+def inRect(p, r1, r2):
+    return r1.x <= p.x <= r2.x and r1.y <= p.y <= r2.y
+
+
 def drawItems():
-    title = Image(Point(500, 200), "inspire_me2.png")
-    sat = Image(Point(500, 700), "sat.png")
-    button = Image(Point(500, 500), "button1.png")
+    title = Image(Point(500, 200), "Text/inspire_me2.png")
+    sat = Image(Point(500, 700), "Text/sat.png")
+    button = Image(Point(500, 500), "Text/button1.png")
     title.draw(window)
 
     sat.draw(window)
@@ -155,8 +180,49 @@ def hover():
         clear(window)
         drawBackground(window)
         round_rectangle(333, 460, 667, 535, radius=25)
-        button = Image(Point(500, 500), "button2.png")
+        button = Image(Point(500, 500), "Text/button2.png")
         button.draw(window)
+
+
+def generateImage():
+    file = images[randint(0, len(images)-1)]
+    im = PImage.open("Images/" + file)
+
+    w = im.width
+    h = im.height
+    if w > h:
+        im = im.resize((750, int(h * (750 / w))))
+    else:
+        im = im.resize((int(w * (750 / h)), 750))
+
+    im2 = ImageEnhance.Color(im).enhance(saturation / 100)
+    draw = ImageDraw.Draw(im2, "RGBA")
+    font = ImageFont.truetype("Caveat.ttf", 30)
+
+    # randomize and format the quote
+    string = quotes[randint(0, len(quotes)-1)]
+    MAX_CHARS = 60
+    newString = ""
+    for i in range(len(string)):
+        if i % MAX_CHARS == 0:
+            newString = " ".join(newString.split()[:-1]) + "\n" + (newString.split()[-1] if " " in newString else "") + string[i]
+        else:
+            newString += string[i]
+    if newString[0] == "\n":
+        newString = newString[1:]
+
+    l = draw.textlength(newString.split("\n")[0], font=font)
+    draw.rectangle((0, 0, l + 20, 50*len(newString.split("\n"))), fill=(0, 0, 0, 100), outline=(0, 0, 0, 80))
+
+    draw.text((10, 5), newString, (255, 255, 255), font=font)
+    im2.save("Temp Images/" + file)
+
+    imageWindows.append(ImageWindow(im2, file))
+
+
+def loadQuotes():
+    global quotes
+    quotes = [x.strip().replace(".", "") for x in open("quotes.txt", "r").read().splitlines()]
 
 
 # initialize the window
@@ -166,22 +232,30 @@ window.bind("<Motion>", motion)
 window.master.protocol("WM_DELETE_WINDOW", onClose)
 window.master.TK_SILENCE_DEPRECATION = 1
 
+# either make the directory or clear it
+files = path.dirname(path.realpath(__file__))
+if "Temp Images" not in listdir(files):
+    mkdir("Temp Images")
+else:
+    for f in listdir(files + "/Temp Images"):
+        os.remove(files + "/Temp Images/" + f)
+
 mixer.init()
 mixer.music.load("music.wav")
 mixer.music.play(loops=-1)
 
-draw1x = False
-trackMouseDown = False
-click = None
-saturation = 100
-initialX = 195
+loadQuotes()
+loadImages()
 
+# generate background circles
 r = 40
 for k in range(40):
+    # insure uniques positions
     pos = Point(randint(r, wSize[0] - r), randint(r, wSize[1] - r))
-    while not all(map(lambda c: distance(c.pos, pos) >= r * 2, circles)):
+    while not all(map(lambda c: distance(c.pos, pos) >= r*2, circles)):
         pos = Point(randint(r, wSize[0] - r), randint(r, wSize[1] - r))
 
+    # insure no purely vertical or horizontal motion
     v = Point(randint(-4, 4), randint(-4, 4))
     while v.x == 0 or v.y == 0:
         v = Point(randint(-4, 4), randint(-4, 4))
@@ -190,19 +264,28 @@ for k in range(40):
 
 while windowOpen:
     clear(window)
+
     drawBackground(window)
+
     for c in circles:
         c.update(wSize, circles)
         createCircle(window, c.pos, fcolor=c.color, ocolor="white", radius=c.radius, width=2)
 
-    click = window.checkMouse()
-
     # DrawBar
-    bar1 = pBar(200, 740, 800, 800, initialX, saturation, click, trackMouseDown)
+    bar1 = pBar(195, 740, 805, 800, initialX, saturation, click, trackMouseDown)
     if bar1 is not None:
         trackMouseDown = bar1[0]
         saturation = bar1[1]
         initialX = bar1[2]
+
+    click = window.checkMouse()
+
+    if click is not None:
+        if inRect(click, Point(415, 490), Point(583, 510)): # generate image
+            generateImage()
+
+    for win in imageWindows:
+        win.update()
 
     drawItems()
     hover()
