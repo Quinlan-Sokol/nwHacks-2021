@@ -165,9 +165,9 @@ def inRect(p, r1, r2):
 
 
 def drawItems():
-    title = Image(Point(500, 200), "Text/inspire_me2.png")
-    sat = Image(Point(500, 700), "Text/sat.png")
-    button = Image(Point(500, 500), "Text/button1.png")
+    title = Image(Point(500, 200), "inspire_me2.png")
+    sat = Image(Point(500, 700), "sat.png")
+    button = Image(Point(500, 500), "button1.png")
     title.draw(window)
 
     sat.draw(window)
@@ -180,7 +180,7 @@ def hover():
         clear(window)
         drawBackground(window)
         round_rectangle(333, 460, 667, 535, radius=25)
-        button = Image(Point(500, 500), "Text/button2.png")
+        button = Image(Point(500, 500), "button2.png")
         button.draw(window)
 
 
