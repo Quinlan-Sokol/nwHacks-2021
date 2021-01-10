@@ -223,7 +223,9 @@ class GraphWin(tk.Canvas):
         self.items = []
         self.mouseX = None
         self.mouseY = None
+        self.mouse_pressed = False
         self.bind("<Button-1>", self._onClick)
+        self.bind("<ButtonRelease-1>", self.onMouseUp)
         self.bind_all("<Key>", self._onKey)
         self.height = int(height)
         self.width = int(width)
@@ -322,11 +324,11 @@ class GraphWin(tk.Canvas):
         not been clicked since last call"""
         if self.isClosed():
             raise GraphicsError("checkMouse in closed window")
-        self.update()
         if self.mouseX != None and self.mouseY != None:
             x, y = self.toWorld(self.mouseX, self.mouseY)
             self.mouseX = None
             self.mouseY = None
+            self.mouse_pressed = True
             return Point(x, y)
         else:
             return None
@@ -394,6 +396,8 @@ class GraphWin(tk.Canvas):
             item.undraw()
             item.draw(self)
         self.update()
+    def onMouseUp(self, *args):
+        self.mouse_pressed = False
 
 
 class Transform:

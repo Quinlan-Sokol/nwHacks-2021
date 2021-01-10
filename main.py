@@ -78,7 +78,7 @@ def onClose():
 
 
 def distance(p1, p2):
-    return sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2)
+    return sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
 
 
 def drawBackground(win):
@@ -91,8 +91,45 @@ def drawBackground(win):
     curB += deltaB
 
 
+def drawCheckbox(x, y):
+    createRectangle(window, Point(x, y), Point(x + 20, y + 20), "black")
+
+
+def pBar(x1, y1, x2, y2, initial, progress, clickPos, holding):
+
+    if holding is True:
+        progress = round((mousePos.getX() - initial) / 3)
+        if progress > 200:
+            progress = 200
+        elif progress < 0:
+            progress = 0
+        if window.mouse_pressed is False:
+            return False, progress, initial
+
+
+    createRectangle(window, Point(x1, y1), Point(x2, y2), "white")
+    createRectangle(window, Point(x1, y1), Point(x1 + 10 + progress * 3, y2), "red")
+    createText(window, Point((x1+x2)/2, (y1 + y2) / 2), progress*2)
+
+    if clickPos is not None and x1 + progress * 3 <= clickPos.getX() <= x1 + progress * 3 + 10 and y1 < clickPos.getY() <= y2:
+        return True, clickPos.getX() - progress * 3, initial
+    return holding, progress, initial
+
+
+def drawItems():
+    createText(window, Point(500, 200), "Inspirational Quote Generator", "white", "courier", 30, "bold")
+    createText(window, Point(500, 700), "Saturation:", "white", "courier", 20)
+    createText(window, Point(500, 500), "Inspire Me Now :)", "white", "courier", 15)
+
+def hover():
+    if 415 <= mousePos.getX() <= 583 and 490 < mousePos.getY() <= 510:
+        clear(window)
+        drawBackground(window)
+        createText(window, Point(500, 500), "Inspire Me Now :)", "black", "courier", 20)
+
+
 # initialize the window
-window = GraphWin("Title", wSize[0], wSize[1], autoflush=False)
+window = GraphWin("Inspire Me Now!", wSize[0], wSize[1], autoflush=False)
 window.setBackground("white")
 window.bind("<Motion>", motion)
 window.master.protocol("WM_DELETE_WINDOW", onClose)
@@ -102,10 +139,16 @@ mixer.init()
 mixer.music.load("music.wav")
 mixer.music.play(loops=-1)
 
+draw1x = False
+trackMouseDown = False
+click = None
+saturation = 0
+initialX = 195
+
 r = 40
 for k in range(40):
     pos = Point(randint(r, wSize[0] - r), randint(r, wSize[1] - r))
-    while not all(map(lambda c: distance(c.pos, pos) >= r*2, circles)):
+    while not all(map(lambda c: distance(c.pos, pos) >= r * 2, circles)):
         pos = Point(randint(r, wSize[0] - r), randint(r, wSize[1] - r))
 
     v = Point(randint(-4, 4), randint(-4, 4))
@@ -116,11 +159,22 @@ for k in range(40):
 
 while windowOpen:
     clear(window)
-
     drawBackground(window)
-
     for c in circles:
         c.update(wSize, circles)
         createCircle(window, c.pos, fcolor=c.color, ocolor="white", radius=c.radius, width=2)
+
+    click = window.checkMouse()
+
+    # DrawBar
+    bar1 = pBar(195, 740, 805, 800, initialX, saturation, click, trackMouseDown)
+    if bar1 is not None:
+        trackMouseDown = bar1[0]
+        saturation = bar1[1]
+        initialX = bar1[2]
+
+    drawItems()
+    hover()
+
 
     update(60)
