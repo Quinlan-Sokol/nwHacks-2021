@@ -106,7 +106,7 @@ def drawBackground(win):
 
 
 def loadImages():
-    for file in listdir("Images/"):
+    for file in listdir("assets/Images/"):
         if ".png" in file:
             images.append(file)
 
@@ -165,9 +165,9 @@ def inRect(p, r1, r2):
 
 
 def drawItems():
-    title = Image(Point(500, 200), "inspire_me2.png")
-    sat = Image(Point(500, 700), "sat.png")
-    button = Image(Point(500, 500), "button1.png")
+    title = Image(Point(500, 200), "assets/inspire_me2.png")
+    sat = Image(Point(500, 700), "assets/sat.png")
+    button = Image(Point(500, 500), "assets/button1.png")
     title.draw(window)
 
     sat.draw(window)
@@ -180,13 +180,13 @@ def hover():
         clear(window)
         drawBackground(window)
         round_rectangle(333, 460, 667, 535, radius=25)
-        button = Image(Point(500, 500), "button2.png")
+        button = Image(Point(500, 500), "assets/button2.png")
         button.draw(window)
 
 
 def generateImage():
     file = images[randint(0, len(images)-1)]
-    im = PImage.open("Images/" + file)
+    im = PImage.open("assets/Images/" + file)
 
     w = im.width
     h = im.height
@@ -197,7 +197,7 @@ def generateImage():
 
     im2 = ImageEnhance.Color(im).enhance(saturation / 100)
     draw = ImageDraw.Draw(im2, "RGBA")
-    font = ImageFont.truetype("Caveat.ttf", 30)
+    font = ImageFont.truetype("assets/Caveat.ttf", 30)
 
     # randomize and format the quote
     string = quotes[randint(0, len(quotes)-1)]
@@ -215,14 +215,14 @@ def generateImage():
     draw.rectangle((0, 0, l + 20, 50*len(newString.split("\n"))), fill=(0, 0, 0, 100), outline=(0, 0, 0, 80))
 
     draw.text((10, 5), newString, (255, 255, 255), font=font)
-    im2.save("Temp Images/" + file)
+    im2.save("assets/Temp Images/" + file)
 
     imageWindows.append(ImageWindow(im2, file))
 
 
 def loadQuotes():
     global quotes
-    quotes = [x.strip().replace(".", "") for x in open("quotes.txt", "r").read().splitlines()]
+    quotes = [x.strip().replace(".", "") for x in open("assets/quotes.txt", "r").read().splitlines()]
 
 
 # initialize the window
@@ -234,14 +234,16 @@ window.master.TK_SILENCE_DEPRECATION = 1
 
 # either make the directory or clear it
 files = path.dirname(path.realpath(__file__))
-if "Temp Images" not in listdir(files):
-    mkdir("Temp Images")
+if "Temp Images" not in listdir(files + "/assets"):
+    mkdir("assets/Temp Images")
 else:
-    for f in listdir(files + "/Temp Images"):
-        os.remove(files + "/Temp Images/" + f)
+    for f in listdir(files + "/assets/Temp Images"):
+        os.remove(files + "/assets/Temp Images/" + f)
+
 
 mixer.init()
-mixer.music.load("music.wav")
+mixer.music.set_volume(0.35)
+mixer.music.load("assets/music.wav")
 mixer.music.play(loops=-1)
 
 loadQuotes()
@@ -250,15 +252,15 @@ loadImages()
 # generate background circles
 r = 40
 for k in range(40):
-    # insure uniques positions
+    # insure unique positions
     pos = Point(randint(r, wSize[0] - r), randint(r, wSize[1] - r))
     while not all(map(lambda c: distance(c.pos, pos) >= r*2, circles)):
         pos = Point(randint(r, wSize[0] - r), randint(r, wSize[1] - r))
 
     # insure no purely vertical or horizontal motion
-    v = Point(randint(-4, 4), randint(-4, 4))
+    v = Point(randint(-5, 5), randint(-5, 5))
     while v.x == 0 or v.y == 0:
-        v = Point(randint(-4, 4), randint(-4, 4))
+        v = Point(randint(-5, 5), randint(-5, 5))
 
     circles.append(BackgroundCircle(pos, choice(circleColors), r, v))
 
@@ -284,6 +286,7 @@ while windowOpen:
         if inRect(click, Point(415, 490), Point(583, 510)): # generate image
             generateImage()
 
+    imageWindows = list(filter(lambda x: x.isAlive, imageWindows))
     for win in imageWindows:
         win.update()
 
